@@ -2,6 +2,7 @@
 HLT = 0b00000001
 LDI = 0b10000010
 PRN = 0b01000111
+MUL = 0b10100010
 
 import sys
 
@@ -25,26 +26,35 @@ class CPU:
         self.ram[address] = value #accept value to write, and write it to address in array
         
 
+#DAY 2:
+#Step 7: Un-hardcode the machine code
     def load(self):
         """Load a program into memory."""
-    #RAM
+        if len(sys.argv) != 2:
+            print("filename error")
+            sys.exit(1)
+
         address = 0
+        try:
 
-        # For now, we've just hardcoded a program:
+            with open(sys.argv[1]) as f:
+                for line in f:
+                    comment_split = line.split('#') #splits line on the # symbol
+                    code_value = comment_split[0].strip() # removes whitespace and \n character
+                    if code_value == "":
+                        continue #moves on if blank line
 
-        program = [
-            # From print8.ls8
-            0b10000010, # LDI R0,8
-            0b00000000,
-            0b00001000,
-            0b01000111, # PRN R0
-            0b00000000,
-            0b00000001, # HLT
-        ]
-
-        for instruction in program:
-            self.ram[address] = instruction
-            address += 1
+                    try:
+                        num = int(code_value, 2) #base 2 for binary
+                    except:
+                        print("Cannot find instruction")
+                    
+                    self.ram[address] = num
+                    address += 1
+              
+        except FileNotFoundError:
+            print('file not found')
+            sys.exit(2)
 
 
     def alu(self, op, reg_a, reg_b):
@@ -53,6 +63,11 @@ class CPU:
         if op == "ADD":
             self.reg[reg_a] += self.reg[reg_b]
         #elif op == "SUB": etc
+    
+        # Step 8: Add the MULT instruction
+        elif op == "MUL":
+            self.reg[reg_a] *= self.reg[reg_b]
+
         else:
             raise Exception("Unsupported ALU operation")
 
@@ -113,6 +128,12 @@ class CPU:
             elif ir == PRN: #If the Instruction Register is at instruction PRN, execute PRN function
                 self.PRN()
 
+            elif ir == MUL:
+                reg_a = self.ram[self.pc + 1]
+                reg_b = self.ram[self.pc + 2]
+                self.alu("MUL", reg_a, reg_b)
+                self.pc += 3
+
             else:
                 print(f"Unknown instruction {ir}") #Otherwise, give the program an "out" if an unknown instruction occurs
             
@@ -137,3 +158,25 @@ class CPU:
     #     elif instruction == PRN:
     #         print(self.reg[operand_a])
     #         self.pc += 2
+
+
+#From Day 1 Hardcoded load(self)
+    # def load(self):
+    #     """Load a program into memory."""
+    #     address = 0
+
+    #     # For now, we've just hardcoded a program:
+
+    #     program = [
+    #         # From print8.ls8
+    #         0b10000010, # LDI R0,8
+    #         0b00000000,
+    #         0b00001000,
+    #         0b01000111, # PRN R0
+    #         0b00000000,
+    #         0b00000001, # HLT
+    #     ]
+        
+    #     for instruction in program:
+    #         self.ram[address] = instruction
+    #         address += 1
