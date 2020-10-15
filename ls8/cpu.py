@@ -7,6 +7,8 @@ ADD = 0b10100000
 SP = 0b00000111
 POP = 0b01000110
 PUSH = 0b01000101
+CALL = 0b01010000
+RET = 0b00010001
 
 import sys
 
@@ -28,8 +30,11 @@ class CPU:
         self.branchtable[LDI] = self.LDI
         self.branchtable[PRN] = self.PRN
         self.branchtable[MUL] = self.MUL
+        self.branchtable[ADD] = self.ADD
         self.branchtable[PUSH] = self.PUSH
         self.branchtable[POP] = self.POP
+        self.branchtable[CALL] = self.CALL
+        self.branchtable[RET] = self.RET
 
 
 
@@ -129,23 +134,54 @@ class CPU:
         self.alu("MUL", reg_a, reg_b)
         self.pc += 3
 
+    def ADD(self):
+        reg_a = self.ram[self.pc + 1]
+        reg_b = self.ram[self.pc + 2]
+        self.alu("ADD", reg_a, reg_b)
+        self.pc += 3
+
     #Step 10: Implement System Stack
     def PUSH(self):
-        #Takes in a register number and saves the value in it onto the stack
         #Decrement the stack pointer
+        #Takes in a register number and saves the value in it onto the stack
         #Store the value in the register onto the top of the stack
+        #the topmost value of the stack is self.reg[SP]
+        self.reg[SP] -= 1
         addressOfReg = self.ram[self.pc + 1]
         value = self.reg[addressOfReg]
-        self.reg[SP] -= 1
         self.ram[self.reg[SP]] = value
         self.pc += 2
 
     def POP(self):
+        #save the value on top of the stack onto the register given
+        #increment the stack pointer
         addressOfReg = self.ram[self.pc + 1]
         value = self.ram[self.reg[SP]]
         self.reg[addressOfReg] = value
         self.reg[SP] += 1
         self.pc += 2
+
+    #Step 11: Implement CALL and RET, Implement Subroutine calls
+    def CALL(self):
+        #compute the return address
+        #push return address onto stack
+        #get the value from the operand reg
+        #set the self.pc to that value
+        address = self.ram[self.pc + 1]
+        value = self.reg[address]
+        self.reg[SP] -= 1
+        self.ram[self.reg[SP]] = self.pc + 2
+        self.pc = value
+
+    def RET(self):
+        #compute the return address
+        #get the top of stack address
+        #get the value at the top of the stack
+        #increment the SP
+        #set it to pc
+        address = self.ram[self.reg[SP]]
+        self.reg[SP] += 1
+        self.pc = address
 
 
     #Step 3: Implement the core of CPU's run() method
@@ -159,7 +195,7 @@ class CPU:
             #PC points to the instruction to execute
             if ir in self.branchtable:
                 self.branchtable[ir]()
-
+                # self.trace()
             else:
                 print(f"Unknown instruction {ir}") #Otherwise, give the program an "out" if an unknown instruction occurs
                 sys.exit(3)
