@@ -3,6 +3,10 @@ HLT = 0b00000001
 LDI = 0b10000010
 PRN = 0b01000111
 MUL = 0b10100010
+ADD = 0b10100000
+SP = 0b00000111
+POP = 0b01000110
+PUSH = 0b01000101
 
 import sys
 
@@ -14,9 +18,20 @@ class CPU:
         """Construct a new CPU."""
         self.reg = [0] * 8      #register stores information, there are 8 of them, so length is 8
         self.ram = [0] * 256    #ram is the memory array
-        self.reg[7] = 0xF4      #spec says that Reg 7 is the hex value 0xF4
+        self.reg[SP] = 0xF4      #spec says that Reg 7 is the hex value 0xF4, now making this the SP, Step #10
         self.pc = 0             #initialize Program Counter at 0
         self.running = False    #boolean, program is not initially running
+
+        #Step 9: Beautify your Run() Loop
+        self.branchtable = {}
+        self.branchtable[HLT] = self.HLT
+        self.branchtable[LDI] = self.LDI
+        self.branchtable[PRN] = self.PRN
+        self.branchtable[MUL] = self.MUL
+        self.branchtable[PUSH] = self.PUSH
+        self.branchtable[POP] = self.POP
+
+
 
     #Step 2: Add RAM functions (ram_read() and ram_write())
     def ram_read(self, address): #array that reads argument "address"
@@ -31,7 +46,7 @@ class CPU:
     def load(self):
         """Load a program into memory."""
         if len(sys.argv) != 2:
-            print("filename error")
+            print("filename error, please supply a filename to load")
             sys.exit(1)
 
         address = 0
@@ -45,7 +60,7 @@ class CPU:
                         continue #moves on if blank line
 
                     try:
-                        num = int(code_value, 2) #base 2 for binary
+                        num = int(code_value, 2) #base 2 for binary and change from string to int
                     except:
                         print("Cannot find instruction")
                     
@@ -108,6 +123,30 @@ class CPU:
         print(self.reg[address])
         self.pc += 2
 
+    def MUL(self):
+        reg_a = self.ram[self.pc + 1]
+        reg_b = self.ram[self.pc + 2]
+        self.alu("MUL", reg_a, reg_b)
+        self.pc += 3
+
+    #Step 10: Implement System Stack
+    def PUSH(self):
+        #Takes in a register number and saves the value in it onto the stack
+        #Decrement the stack pointer
+        #Store the value in the register onto the top of the stack
+        addressOfReg = self.ram[self.pc + 1]
+        value = self.reg[addressOfReg]
+        self.reg[SP] -= 1
+        self.ram[self.reg[SP]] = value
+        self.pc += 2
+
+    def POP(self):
+        addressOfReg = self.ram[self.pc + 1]
+        value = self.ram[self.reg[SP]]
+        self.reg[addressOfReg] = value
+        self.reg[SP] += 1
+        self.pc += 2
+
 
     #Step 3: Implement the core of CPU's run() method
     #Execution sequence in the spec
@@ -117,25 +156,13 @@ class CPU:
         
         while self.running:
             ir = self.ram[self.pc]  #IR = The Instruction Register, contains copy of currently executing instruction
-                                    #PC points to the instruction to execute
-            
-            if ir == HLT: #If the Instruction Register is at instruction HLT, execute HLT function
-                self.HLT()
-            
-            elif ir == LDI: #If the Instruction Register is at instruction LDI, execute LDI function
-                self.LDI()
-
-            elif ir == PRN: #If the Instruction Register is at instruction PRN, execute PRN function
-                self.PRN()
-
-            elif ir == MUL:
-                reg_a = self.ram[self.pc + 1]
-                reg_b = self.ram[self.pc + 2]
-                self.alu("MUL", reg_a, reg_b)
-                self.pc += 3
+            #PC points to the instruction to execute
+            if ir in self.branchtable:
+                self.branchtable[ir]()
 
             else:
                 print(f"Unknown instruction {ir}") #Otherwise, give the program an "out" if an unknown instruction occurs
+                sys.exit(3)
             
 
 #Step 3 ALT with Mari's Lecture:
@@ -180,3 +207,21 @@ class CPU:
     #     for instruction in program:
     #         self.ram[address] = instruction
     #         address += 1
+
+
+# From Day 1 original while loop in run() function:
+
+# if ir == HLT: #If the Instruction Register is at instruction HLT, execute HLT function
+#                 self.HLT()
+            
+#             elif ir == LDI: #If the Instruction Register is at instruction LDI, execute LDI function
+#                 self.LDI()
+
+#             elif ir == PRN: #If the Instruction Register is at instruction PRN, execute PRN function
+#                 self.PRN()
+
+#             elif ir == MUL:
+#                 reg_a = self.ram[self.pc + 1]
+#                 reg_b = self.ram[self.pc + 2]
+#                 self.alu("MUL", reg_a, reg_b)
+#                 self.pc += 3
