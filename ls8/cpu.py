@@ -9,6 +9,14 @@ POP = 0b01000110
 PUSH = 0b01000101
 CALL = 0b01010000
 RET = 0b00010001
+#Sprint#
+CMP = 0b10100111
+JMP = 0b01010100
+JEQ = 0b01010101
+JNE = 0b01010110
+
+
+
 
 import sys
 
@@ -23,6 +31,7 @@ class CPU:
         self.reg[SP] = 0xF4      #spec says that Reg 7 is the hex value 0xF4, now making this the SP, Step #10
         self.pc = 0             #initialize Program Counter at 0
         self.running = False    #boolean, program is not initially running
+        self.fl = 0b00000000    #last 3 bits will change depeneding on CMP comparisons
 
         #Step 9: Beautify your Run() Loop
         self.branchtable = {}
@@ -35,6 +44,12 @@ class CPU:
         self.branchtable[POP] = self.POP
         self.branchtable[CALL] = self.CALL
         self.branchtable[RET] = self.RET
+        #Sprint#
+        self.branchtable[CMP] = self.CMP
+        self.branchtable[JMP] = self.JMP
+        self.branchtable[JEQ] = self.JEQ
+        self.branchtable[JNE] = self.JNE
+
 
 
 
@@ -87,6 +102,19 @@ class CPU:
         # Step 8: Add the MULT instruction
         elif op == "MUL":
             self.reg[reg_a] *= self.reg[reg_b]
+        
+        #Sprint#
+        #fl bits: 00000LGE        
+        #L: less than, set to 1 if regA < regB, otherwise0
+        #G: greater than, set to 1 if regA > regB, otherwise 0
+        #E: equal, set to 1 if regA == regB, otherwise 0
+        elif op == "CMP":
+            if self.reg[reg_a] < self.reg[reg_b]:
+                self.fl = 0b00000100
+            elif self.reg[reg_a] > self.reg[reg_b]:
+                self.fl = 0b00000010
+            else:
+                self.fl = 0b00000001
 
         else:
             raise Exception("Unsupported ALU operation")
@@ -183,6 +211,38 @@ class CPU:
         self.reg[SP] += 1
         self.pc = address
 
+    #Sprint#
+    def CMP(self):
+        #conditionals for equal flag handled in the alu
+        reg_a = self.ram[self.pc + 1]
+        reg_b = self.ram[self.pc + 2]
+        self.alu("CMP", reg_a, reg_b)
+        self.pc += 3
+
+    def JMP(self):
+        #jump to address stored in the given register
+        #set pc to the address stored in the given register
+        reg_address = self.ram[self.pc + 1]
+        self.pc = self.reg[reg_address]
+
+    def JEQ(self):
+        #jump if equal
+        #if equal flag is set to true, jump to address stored in the given register
+        #otherwise, skip these instructions
+        if self.fl == 0b00000001:
+            reg_address = self.ram[self.pc + 1]
+            self.pc = self.reg[reg_address]
+        else: self.pc += 2
+
+    def JNE(self):
+        #jump if not equal
+        #if equal flag is false, 0, jump to address stored in the given register
+        #otherwise, skip these instructions
+        if self.fl != 0b00000001:
+            reg_address = self.ram[self.pc + 1]
+            self.pc = self.reg[reg_address]
+        else:
+            self.pc +=2
 
     #Step 3: Implement the core of CPU's run() method
     #Execution sequence in the spec
