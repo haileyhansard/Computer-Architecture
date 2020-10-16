@@ -14,8 +14,10 @@ CMP = 0b10100111
 JMP = 0b01010100
 JEQ = 0b01010101
 JNE = 0b01010110
-
-
+#Sprint Stretch#
+AND = 0b10101000
+OR = 0b10101010
+XOR = 0b10101011
 
 
 import sys
@@ -49,6 +51,10 @@ class CPU:
         self.branchtable[JMP] = self.JMP
         self.branchtable[JEQ] = self.JEQ
         self.branchtable[JNE] = self.JNE
+        #Sprint Stretch#
+        self.branchtable[AND] = self.AND
+        self.branchtable[OR] = self.OR
+        self.branchtable[XOR] = self.XOR
 
 
 
@@ -115,6 +121,14 @@ class CPU:
                 self.fl = 0b00000010
             else:
                 self.fl = 0b00000001
+        
+        #Sprint Stretch#
+        elif op == "AND":
+            self.reg[reg_a] &= self.reg[reg_b]
+        elif op == "OR":
+            self.reg[reg_a] |= self.reg[reg_b]
+        elif op == "XOR":
+            self.reg[reg_a] ^= self.reg[reg_b]
 
         else:
             raise Exception("Unsupported ALU operation")
@@ -243,6 +257,26 @@ class CPU:
             self.pc = self.reg[reg_address]
         else:
             self.pc +=2
+
+    #Sprint Stretch#
+    def AND(self):
+        reg_a = self.ram[self.pc + 1]
+        reg_b = self.ram[self.pc + 2]
+        self.alu("AND", reg_a, reg_b)
+        self.pc +=3
+
+    def OR(self):
+        reg_a = self.ram[self.pc + 1]
+        reg_b = self.ram[self.pc + 2]
+        self.alu("OR", reg_a, reg_b)
+        self.pc +=3
+    
+    def XOR(self):
+        reg_a = self.ram[self.pc + 1]
+        reg_b = self.ram[self.pc + 2]
+        self.alu("XOR", reg_a, reg_b)
+        self.pc +=3
+
 
     #Step 3: Implement the core of CPU's run() method
     #Execution sequence in the spec
