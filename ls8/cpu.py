@@ -30,7 +30,7 @@ class CPU:
         """Construct a new CPU."""
         self.reg = [0] * 8      #register stores information, there are 8 of them, so length is 8
         self.ram = [0] * 256    #ram is the memory array
-        self.reg[SP] = 0xF4      #spec says that Reg 7 is the hex value 0xF4, now making this the SP, Step #10
+        self.reg[SP] = 0xF4      #spec says that Reg 7 is the hex value 0xF4, now making this the SP, Step #10 stack pointer
         self.pc = 0             #initialize Program Counter at 0
         self.running = False    #boolean, program is not initially running
         self.fl = 0b00000000    #last 3 bits will change depeneding on CMP comparisons

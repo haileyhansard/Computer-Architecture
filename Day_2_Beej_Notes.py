@@ -83,3 +83,8 @@ instruction2 = 0b10011010
 shifted2 = instruction2 >> 3
 mask = 0b00000011 & shifted2 
 print(bin(mask)) #prints 0b11 because we shifted the digits of the 4th and 5th digits to the 7th and 8th spots. then masked the bits with the & operator to make all the digits turn to 0 until the last 2 digits, which are "turned on" to 1
+
+print(bin(0b00010001 & 0b11110000))
+print(bin(0b01100001 | 0b10000100))
+
+print(hex(0b00001110))

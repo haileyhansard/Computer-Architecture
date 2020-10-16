@@ -94,3 +94,9 @@ print(f'{a:x}')
 
 print(bin(21))
 print(hex(21))
+
+print(hex(0b01100101))
+print(hex(0b00111100))
+print(hex(0b00011110))
+
+print(bin(0x8C))
